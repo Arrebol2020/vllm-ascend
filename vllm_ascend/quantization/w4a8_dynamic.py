@@ -208,8 +208,8 @@ def fused_experts_with_mc2(
         return hidden_states
     else:
         with npu_stream_switch("moe_secondary", 0):
-            npu_wait_tensor(hidden_states, topk_weights)
-            shared_output, _ = shared_experts.down_proj(hidden_states)
+            npu_wait_tensor(shared_act[0], down_out_list)
+            shared_output, _ = shared_experts.down_proj(shared_act)
         return hidden_states, shared_output
     
 
@@ -659,7 +659,6 @@ class AscendW4A8DynamicFusedMoEMethod:
             backend = device_group._get_backend(torch.device("npu"))
             self.moe_all_to_all_group_name = backend.get_hccl_comm_name(
                 local_rank)
-            backend.create_hccl_comm(self.moe_all_to_all_group_name)
         except AttributeError:
             self.moe_all_to_all_group_name = ""
     
